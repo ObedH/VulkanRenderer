@@ -16,6 +16,7 @@ target_sources(${PROJECT_NAME}
         src/VulkanRenderer.cpp
         src/VulkanInstance.cpp
         src/DebugMessenger.cpp
+        src/Device.cpp
 )
 
 target_include_directories(${PROJECT_NAME}

@@ -4,7 +4,7 @@
 
 
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessenger::debugCallback(
+static VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessenger::debug_callback(
     vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     vk::Flags<vk::DebugUtilsMessageTypeFlagBitsEXT> messageType,
     const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
@@ -24,7 +24,7 @@ vk::DebugUtilsMessengerEXT DebugMessenger::make_debug_messenger(vk::Instance& in
         vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral |
         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
         vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
-        debugCallback,
+        debug_callback,
         nullptr
     );
 

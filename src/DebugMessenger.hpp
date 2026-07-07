@@ -6,7 +6,7 @@
 
 namespace DebugMessenger {
 
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(
         vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         vk::Flags<vk::DebugUtilsMessageTypeFlagBitsEXT> messageType,
         const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData,
