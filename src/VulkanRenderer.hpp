@@ -29,11 +29,12 @@ class VulkanRenderer {
 
         int width{ 800 };
         int height{ 600 };
-
         GLFWwindow* window{ nullptr };
+
         vk::Instance vulkan_instance{ nullptr };
-        vk::DebugUtilsMessengerEXT debug_messenger{ nullptr };
         vk::detail::DispatchLoaderDynamic dldi;
+        vk::DebugUtilsMessengerEXT debug_messenger{ nullptr };
+        vk::PhysicalDevice physical_device{ nullptr };
 
 
     private:
@@ -42,7 +43,10 @@ class VulkanRenderer {
         void initGLFW();
         void createWindow();
         void initVulkan();
+        void makeInstance();
+        void makeDynamicDispatchLoader();
         void makeDebugMessenger();
+        void makeDevice();
 
 /* ==================== CLEANUP ==================== */
         void cleanup();

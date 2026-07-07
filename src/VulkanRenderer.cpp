@@ -49,21 +49,39 @@ void VulkanRenderer::createWindow() {
 
 void VulkanRenderer::initVulkan() {
 
+    this->makeInstance();
+    this->makeDynamicDispatchLoader();
+    this->makeDebugMessenger();
+    this->makeDevice();
+
+}
+
+void VulkanRenderer::makeInstance() {
+
     // Create instance
     this->vulkan_instance = VulkanInstance::make_instance("Vulkan Renderer", this->debug_mode);
     std::cout << "[INFO]: Successfully created a Vulkan instance\n";
 
+}
+
+void VulkanRenderer::makeDynamicDispatchLoader() {
+
     // Create dynamic dispatch loader
     this->dldi = vk::detail::DispatchLoaderDynamic(this->vulkan_instance, vkGetInstanceProcAddr);
-
-    // Create debug messenger
-    this->makeDebugMessenger();
+    std::cout << "[INFO]: Successfully created a dynamic dispatch loader\n";
 
 }
 
 void VulkanRenderer::makeDebugMessenger() {
+
+    // Create debug messenger
     this->debug_messenger = DebugMessenger::make_debug_messenger(this->vulkan_instance, this->dldi);
     std::cout << "[INFO]: Successfully created a debug messenger\n";
+
+}
+
+void VulkanRenderer::makeDevice() {
+
 }
 
 
@@ -83,20 +101,23 @@ void VulkanRenderer::cleanup() {
 }
 
 void VulkanRenderer::cleanupVulkan() {
-
+    this->vulkan_instance.destroyDebugUtilsMessengerEXT(this->debug_messenger, nullptr, dldi);
+    std::cout << "[INFO]: Successfully destroyed debug messenger\n";
+    this->vulkan_instance.destroy();
+    std::cout << "[INFO]: Successfully destroyed Vulkan instance\n";
 }
 
 void VulkanRenderer::destroyWindow() {
 
-    std::cout << "[INFO]: Closing GLFW window\n";
     glfwDestroyWindow(this->window);
+    std::cout << "[INFO]: Successfully closed GLFW window\n";
 
 }
 
 void VulkanRenderer::destroyGLFW() {
 
-    std::cout << "[INFO]: Terminating GLFW\n";
     glfwTerminate();
+    std::cout << "[INFO]: Successfully terminated GLFW\n";
 
 }
 
