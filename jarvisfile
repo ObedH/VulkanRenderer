@@ -1,0 +1,8 @@
+task reconfig:
+cmake -S . -B build
+
+task build:
+cmake --build build
+
+task run:
+./build/VulkanRenderer
