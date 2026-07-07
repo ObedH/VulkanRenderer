@@ -1,6 +1,8 @@
 #include "Device.hpp"
 
 #include <iostream>
+#include <set>
+#include <vector>
 
 
 
@@ -29,9 +31,22 @@ void Device::log_device_properties(const vk::PhysicalDevice& device) {
 
 }
 
-bool Device::check_device_extension_support(const vk::PhysicalDevice& device, const std::vector<const char*>& requested_extension, bool debug) {
+bool Device::check_device_extension_support(const vk::PhysicalDevice& device, const std::vector<const char*>& requested_extensions, bool debug) {
 
+    std::set<std::string> required_extensions(requested_extensions.begin(), requested_extensions.end());
 
+    if(debug) {
+        std::cout << "[DEBUG]: Device can support the following extensions:\n";
+    }
+    for(vk::ExtensionProperties& extension : device.enumerateDeviceExtensionProperties()) {
+        if(debug) {
+            std::cout << "\t" << extension.extensionName << "\n";
+        }
+
+        required_extensions.erase(extension.extensionName);
+    }
+
+    return required_extensions.empty();
 
 }
 
