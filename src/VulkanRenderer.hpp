@@ -7,6 +7,8 @@
 
 #include <vulkan/vulkan.hpp>
 
+#include "Device.hpp"
+
 
 
 class VulkanRenderer {
@@ -36,6 +38,9 @@ class VulkanRenderer {
         vk::DebugUtilsMessengerEXT debug_messenger{ nullptr };
         vk::PhysicalDevice physical_device{ nullptr };
         vk::Device logical_device{ nullptr };
+        vk::Queue graphics_queue{ nullptr };
+
+        Device::QueueFamilyIndices queue_family_indices;
 
 
     private:

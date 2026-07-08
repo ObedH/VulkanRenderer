@@ -142,13 +142,12 @@ Device::QueueFamilyIndices Device::find_queue_families(vk::PhysicalDevice device
 
 }
 
-vk::Device Device::create_logical_device(vk::PhysicalDevice physical_device, bool debug) {
+vk::Device Device::create_logical_device(vk::PhysicalDevice physical_device, Device::QueueFamilyIndices indices, bool debug) {
     
-    // Find suitable queue families
-    QueueFamilyIndices indices = find_queue_families(physical_device, debug);
-    float queue_priority = 1.0f;
 
     // Build queue creation info
+    float queue_priority = 1.0f;
+
     vk::DeviceQueueCreateInfo queue_create_info = vk::DeviceQueueCreateInfo(
         vk::DeviceQueueCreateFlags(),
         indices.graphics_family.value(),
@@ -180,5 +179,11 @@ vk::Device Device::create_logical_device(vk::PhysicalDevice physical_device, boo
     catch(vk::SystemError err) {
         return nullptr;
     }
+
+}
+
+vk::Queue Device::get_queue(vk::PhysicalDevice physical_device, vk::Device logical_device, QueueFamilyIndices indices, bool debug) {
+
+    return logical_device.getQueue(indices.graphics_family.value(), 0);
 
 }
