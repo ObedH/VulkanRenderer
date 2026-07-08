@@ -138,7 +138,6 @@ vk::Instance VulkanInstance::make_instance(const char* application_name, bool de
         return vk::createInstance(create_info, nullptr);
     }
     catch(vk::SystemError err) {
-        std::cerr << "[ERROR]: Failed to create Vulkan instance\n";
         return nullptr;
     }
 }

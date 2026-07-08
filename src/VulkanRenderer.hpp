@@ -35,6 +35,7 @@ class VulkanRenderer {
         vk::detail::DispatchLoaderDynamic dldi;
         vk::DebugUtilsMessengerEXT debug_messenger{ nullptr };
         vk::PhysicalDevice physical_device{ nullptr };
+        vk::Device logical_device{ nullptr };
 
 
     private:

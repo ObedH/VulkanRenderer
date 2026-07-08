@@ -103,7 +103,13 @@ void VulkanRenderer::makeDevice() {
     this->physical_device = physical_device;
     std::cout << "[INFO]: Successfully chose a physical device\n";
 
-    Device::find_queue_families(this->physical_device, this->debug_mode);
+    // Create logical device
+    vk::Device logical_device = Device::create_logical_device(this->physical_device, debug_mode);
+    if(logical_device == nullptr) {
+        throw std::runtime_error("[ERROR]: Failed to create logical device!");
+    }
+    this->logical_device = logical_device;
+    std::cout << "[INFO]: Successfully created a logical device\n";
 }
 
 
@@ -123,10 +129,16 @@ void VulkanRenderer::cleanup() {
 }
 
 void VulkanRenderer::cleanupVulkan() {
+
+    this->logical_device.destroy();
+    std::cout << "[INFO]: Successfully destroyed logical device\n";
+
     this->vulkan_instance.destroyDebugUtilsMessengerEXT(this->debug_messenger, nullptr, dldi);
     std::cout << "[INFO]: Successfully destroyed debug messenger\n";
+
     this->vulkan_instance.destroy();
     std::cout << "[INFO]: Successfully destroyed Vulkan instance\n";
+
 }
 
 void VulkanRenderer::destroyWindow() {

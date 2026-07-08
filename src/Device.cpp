@@ -141,3 +141,44 @@ Device::QueueFamilyIndices Device::find_queue_families(vk::PhysicalDevice device
     return indices;
 
 }
+
+vk::Device Device::create_logical_device(vk::PhysicalDevice physical_device, bool debug) {
+    
+    // Find suitable queue families
+    QueueFamilyIndices indices = find_queue_families(physical_device, debug);
+    float queue_priority = 1.0f;
+
+    // Build queue creation info
+    vk::DeviceQueueCreateInfo queue_create_info = vk::DeviceQueueCreateInfo(
+        vk::DeviceQueueCreateFlags(),
+        indices.graphics_family.value(),
+        1, &queue_priority
+    );
+
+    vk::PhysicalDeviceFeatures device_features = vk::PhysicalDeviceFeatures();
+
+    // Declare enabled layers
+    std::vector<const char*> enabled_layers;
+    if(debug) {
+        enabled_layers.push_back("VK_LAYER_KHRONOS_validation");
+    }
+
+    // Build device creation info
+    vk::DeviceCreateInfo device_create_info = vk::DeviceCreateInfo(
+        vk::DeviceCreateFlags(),
+        1, &queue_create_info,
+        enabled_layers.size(),
+        enabled_layers.data(),
+        0, nullptr,
+        &device_features
+    );
+
+    try {
+        vk::Device device = physical_device.createDevice(device_create_info);
+        return device;
+    }
+    catch(vk::SystemError err) {
+        return nullptr;
+    }
+
+}
