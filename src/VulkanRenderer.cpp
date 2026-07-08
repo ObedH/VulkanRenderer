@@ -102,6 +102,8 @@ void VulkanRenderer::makeDevice() {
     }
     this->physical_device = physical_device;
     std::cout << "[INFO]: Successfully chose a physical device\n";
+
+    Device::find_queue_families(this->physical_device, this->debug_mode);
 }
 
 
