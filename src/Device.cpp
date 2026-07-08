@@ -66,6 +66,66 @@ std::vector<std::string> Device::log_transform_bits(vk::SurfaceTransformFlagsKHR
     
 }
 
+std::vector<std::string> Device::log_alpha_composite_bits(vk::CompositeAlphaFlagsKHR bits) {
+
+    std::vector<std::string> result;
+
+    if(bits & vk::CompositeAlphaFlagBitsKHR::eOpaque) {
+        result.push_back("opaque (alpha ignored)");
+    }
+    if(bits & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied) {
+        result.push_back("pre multiplied (alpha expected to already be multiplied in image)");
+    }
+    if(bits & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied) {
+        result.push_back("post multiplied (alpha will be applied during composition)");
+    }
+    if(bits & vk::CompositeAlphaFlagBitsKHR::eInherit) {
+        result.push_back("inherited");
+    }
+
+    return result;
+
+}
+
+std::vector<std::string> Device::log_image_usage_bits(vk::ImageUsageFlags bits) {
+    
+    std::vector<std::string> result;
+
+    if(bits & vk::ImageUsageFlagBits::eTransferSrc) {
+        result.push_back("transfer src: image can be used as the source of a transfer command.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eTransferDst) {
+        result.push_back("transfer dst: image can be used as the destination of a transfer command.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eSampled) {
+        result.push_back("sampled: image can be used to create a VkImageView suitable for occupying a VkDescriptorSet slot either of type VK_DESCRIPTOR_TYPE_SAMPLED_IAMGE or VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, and be sampled by a shader.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eStorage) {
+        result.push_back("storage: image can be used to create a VkImageView suitable for occupying a VkDescriptorSet slot of type VK_DESCRIPTOR_TYPE_STORAGE_IMAGE.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eColorAttachment) {
+        result.push_back("color attachment: image can be used to create a VkImageView suitable for use as a color or resolve attachment in a VkFrameBuffer.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eDepthStencilAttachment) {
+        result.push_back("depth/stencil attachment: image can be used to create a VkImageView suitable for use as a depth/stencil or depth/stencil resolve attachment in a VkFramebuffer.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eTransientAttachment) {
+        result.push_back("transient attachment: implementations may support using memory allocations with the VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT to back an image with this usage. This bit can be set for any image that can be used to create a VkImageView suitable for use as a color, resolve, depth/stencil, or input attachment.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eInputAttachment) {
+        result.push_back("input attachment: image can be used to create a VkImageView suitable for occupying VkDescriptorSet slot of type VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT; be read from a shader as an input attachment; and be used as an input attachment in a framebuffer.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eFragmentDensityMapEXT) {
+        result.push_back("fragment density map: image can be used to create a VkImageView suitable for use as a fragment density map image.");
+    }
+    if(bits & vk::ImageUsageFlagBits::eFragmentShadingRateAttachmentKHR) {
+        result.push_back("fragment shading rate attachment: image can be used to create a VkImageView suitable for use as a fragment shading rate attachment or shading rate image.");
+    }
+
+    return result;
+
+}
+
 bool Device::check_device_extension_support(const vk::PhysicalDevice& device, const std::vector<const char*>& requested_extensions, bool debug) {
 
     // Check each required extension to see if it is supported
@@ -283,6 +343,26 @@ Device::SwapChainSupportDetails Device::query_swapchain_support(vk::PhysicalDevi
         string_list = log_transform_bits(support.capabilities.currentTransform);
         for(std::string line : string_list) {
             std::cout << "\t\t" << line << '\n';
+        }
+
+        std::cout << "\tSupported alpha operations:\n";
+        string_list = log_alpha_composite_bits(support.capabilities.supportedCompositeAlpha);
+        for(std::string line : string_list) {
+            std::cout << "\t\t" << line << '\n';
+        }
+
+        std::cout << "\tSupported image usage:\n";
+        string_list = log_image_usage_bits(support.capabilities.supportedUsageFlags);
+        for(std::string line : string_list) {
+            std::cout << "\t\t" << line << '\n';
+        }
+    }
+
+    support.formats = device.getSurfaceFormatsKHR(surface);
+    if(debug) {
+        for(vk::SurfaceFormatKHR supported_format : support.formats) {
+            std::cout << "\tSupported pixel format: " << vk::to_string(supported_format.format) << '\n';
+            std::cout << "\tSupported color space: " << vk::to_string(supported_format.colorSpace) << '\n';
         }
     }
 
