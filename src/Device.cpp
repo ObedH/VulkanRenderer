@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <set>
-#include <vector>
 
 
 
@@ -30,6 +29,41 @@ void Device::log_device_properties(const vk::PhysicalDevice& device) {
             std::cout << "Other\n";
     }
 
+}
+
+std::vector<std::string> Device::log_transform_bits(vk::SurfaceTransformFlagsKHR bits) {
+    std::vector<std::string> result;
+
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eIdentity) {
+        result.push_back("identity");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eRotate90) {
+        result.push_back("90 degree rotation");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eRotate180) {
+        result.push_back("180 degree rotation");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eRotate270) {
+        result.push_back("270 degree rotation");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eHorizontalMirror) {
+        result.push_back("horizontal mirror");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eHorizontalMirrorRotate90) {
+        result.push_back("horizontal mirror, then 90 degree rotation");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eHorizontalMirrorRotate180) {
+        result.push_back("horizontal mirror, then 180 degree rotation");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eHorizontalMirrorRotate270) {
+        result.push_back("horizontal mirror, then 270 degree rotation");
+    }
+    if(bits & vk::SurfaceTransformFlagBitsKHR::eInherit) {
+        result.push_back("inherit");
+    }
+
+    return result;
+    
 }
 
 bool Device::check_device_extension_support(const vk::PhysicalDevice& device, const std::vector<const char*>& requested_extensions, bool debug) {
@@ -107,7 +141,7 @@ vk::PhysicalDevice Device::choose_physical_device(vk::Instance& instance, bool d
 
 }
 
-Device::QueueFamilyIndices Device::find_queue_families(vk::PhysicalDevice device, bool debug) {
+Device::QueueFamilyIndices Device::find_queue_families(vk::PhysicalDevice device, vk::SurfaceKHR surface, bool debug) {
 
     // Query the device's supported queue families
     QueueFamilyIndices indices;
@@ -123,11 +157,15 @@ Device::QueueFamilyIndices Device::find_queue_families(vk::PhysicalDevice device
     for(vk::QueueFamilyProperties queue_family : queue_families) {
         if(queue_family.queueFlags & vk::QueueFlagBits::eGraphics) {
             indices.graphics_family = i;
-            // TODO: Reconsider this assumption
-            indices.present_family = i;
-
             if(debug) {
-                std::cout << "\tQueue family " << i << " is suitable for graphics and presenting.\n";
+                std::cout << "\tQueue family " << i << " is suitable for graphics\n";
+            }
+        }
+
+        if(device.getSurfaceSupportKHR(i, surface)) {
+            indices.present_family = i;
+            if(debug) {
+                std::cout << "\tQueue family " << i << " is suitable for presenting\n";
             }
         }
 
@@ -146,15 +184,33 @@ vk::Device Device::create_logical_device(vk::PhysicalDevice physical_device, Dev
     
 
     // Build queue creation info
+    std::vector<uint32_t> unique_indices;
+    unique_indices.push_back(indices.graphics_family.value());
+    if(indices.graphics_family.value() != indices.present_family.value()) {
+        unique_indices.push_back(indices.present_family.value());
+    }
     float queue_priority = 1.0f;
 
-    vk::DeviceQueueCreateInfo queue_create_info = vk::DeviceQueueCreateInfo(
-        vk::DeviceQueueCreateFlags(),
-        indices.graphics_family.value(),
-        1, &queue_priority
-    );
+    std::vector<vk::DeviceQueueCreateInfo> queue_create_info;
+    for(uint32_t queue_family_index : unique_indices) {
+        queue_create_info.push_back(
+            vk::DeviceQueueCreateInfo(
+                vk::DeviceQueueCreateFlags(),
+                indices.graphics_family.value(),
+                1, &queue_priority
+            )
+        );
+    }
+
+
+    // Request device extensions
+    std::vector<const char*> device_extensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
+
 
     vk::PhysicalDeviceFeatures device_features = vk::PhysicalDeviceFeatures();
+
 
     // Declare enabled layers
     std::vector<const char*> enabled_layers;
@@ -162,13 +218,13 @@ vk::Device Device::create_logical_device(vk::PhysicalDevice physical_device, Dev
         enabled_layers.push_back("VK_LAYER_KHRONOS_validation");
     }
 
+
     // Build device creation info
     vk::DeviceCreateInfo device_create_info = vk::DeviceCreateInfo(
         vk::DeviceCreateFlags(),
-        1, &queue_create_info,
-        enabled_layers.size(),
-        enabled_layers.data(),
-        0, nullptr,
+        queue_create_info.size(), queue_create_info.data(),
+        enabled_layers.size(), enabled_layers.data(),
+        device_extensions.size(), device_extensions.data(),
         &device_features
     );
 
@@ -182,8 +238,54 @@ vk::Device Device::create_logical_device(vk::PhysicalDevice physical_device, Dev
 
 }
 
-vk::Queue Device::get_queue(vk::PhysicalDevice physical_device, vk::Device logical_device, QueueFamilyIndices indices, bool debug) {
+std::array<vk::Queue,2> Device::get_queue(vk::Device logical_device, QueueFamilyIndices indices, bool debug) {
 
-    return logical_device.getQueue(indices.graphics_family.value(), 0);
+    return {
+        {
+            logical_device.getQueue(indices.graphics_family.value(), 0),
+            logical_device.getQueue(indices.present_family.value(), 0)
+        }
+    };
+}
+Device::SwapChainSupportDetails Device::query_swapchain_support(vk::PhysicalDevice device, vk::SurfaceKHR surface, bool debug) {
+
+    SwapChainSupportDetails support;
+
+    support.capabilities = device.getSurfaceCapabilitiesKHR(surface);
+
+    if(debug) {
+        // TODO: These values look REALLY suspicious!
+        std::cout << "[DEBUG]: Swapchain can support the following surface capabilities:\n";
+        std::cout << "\tMinimum image count: " << support.capabilities.minImageCount << "\n";
+        std::cout << "\tMaximum image count: " << support.capabilities.maxImageCount << "\n";
+
+        std::cout << "\tCurrent extent:\n";
+        std::cout << "\t\tWidth: " << support.capabilities.currentExtent.width << '\n';
+        std::cout << "\t\tHeight: " << support.capabilities.currentExtent.height << '\n';
+
+        std::cout << "\tMinimum supported extent: \n";
+        std::cout << "\t\tWidth: " << support.capabilities.minImageExtent.width << '\n';
+        std::cout << "\t\tHeight: " << support.capabilities.minImageExtent.height << '\n';
+
+        std::cout << "\tMaximum supported extent: \n";
+        std::cout << "\t\tWidth: " << support.capabilities.maxImageExtent.width << '\n';
+        std::cout << "\t\tHeight: " << support.capabilities.maxImageExtent.height << '\n';
+
+        std::cout << "\tMaximum image array layers: " << support.capabilities.maxImageArrayLayers << '\n';
+        
+        std::cout << "\tSupported transforms:\n";
+        std::vector<std::string> string_list = log_transform_bits(support.capabilities.supportedTransforms);
+        for(std::string line : string_list) {
+            std::cout << "\t\t" << line << '\n';
+        }
+
+        std::cout << "\tCurrent transforms:\n";
+        string_list = log_transform_bits(support.capabilities.currentTransform);
+        for(std::string line : string_list) {
+            std::cout << "\t\t" << line << '\n';
+        }
+    }
+
+    return support;
 
 }

@@ -36,9 +36,12 @@ class VulkanRenderer {
         vk::Instance vulkan_instance{ nullptr };
         vk::detail::DispatchLoaderDynamic dldi;
         vk::DebugUtilsMessengerEXT debug_messenger{ nullptr };
+        vk::SurfaceKHR surface{ nullptr };
+
         vk::PhysicalDevice physical_device{ nullptr };
         vk::Device logical_device{ nullptr };
         vk::Queue graphics_queue{ nullptr };
+        vk::Queue present_queue{ nullptr };
 
         Device::QueueFamilyIndices queue_family_indices;
 
@@ -52,6 +55,7 @@ class VulkanRenderer {
         void makeInstance();
         void makeDynamicDispatchLoader();
         void makeDebugMessenger();
+        void connectWindowSurface();
         void makeDevice();
 
 /* ==================== CLEANUP ==================== */
